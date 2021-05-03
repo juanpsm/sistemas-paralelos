@@ -209,14 +209,11 @@ void * matmulblks(void * ptr)
   { 
     for (j = 0; j < n; j+=bs)
     {
-      //printf("    (%d) for j = %d; j < %d\n",id, j, n);
-      //printf("    (%d) acceso a AB %d %d\n",id, i, j);
       cblk = &AB[i*n + j];
       for (k = 0; k < n; k+=bs)
       { 
         ablk = &A[i*n + k];
         bblk = &B[j*n + k];
-        // printf("i=%d j=%d k=%d\n", i,j,k);
         //FOR PARA PROCESAR BLOQUE
         for (f=0; f < bs; f++)
         {
@@ -224,23 +221,13 @@ void * matmulblks(void * ptr)
           {
             for (h = 0; h < bs; h++)
             {
-             
               cblk[f*n + c] += ablk[f*n + h] * bblk[c*n + h];
-              // printf("(%d) i:%d j:%d k:%d f:%d c:%d h:%d\n",id,i,j,k,f,c,h);
-
-              // AB[(i+ig)*n + j+jg] += A[(i+ig)*n + k+kg] * B[(j+jg)*n+k+kg];
-              // cblk[i*n + j] += ablk[i*n + k] * bblk[j*n + k];
-              // ablk : [      a          ]
-              //               ^ik
-              // ig=0 jg=0 kg=1
-              // i=0 j=0 k=0
-              // AB [0] += A[1] * B[1]
             }
           }
         }
       }
     }
   }
+  pthread_exit(0);
 }
 /*****************************************************************/
-
