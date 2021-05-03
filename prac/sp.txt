@@ -1,0 +1,5 @@
+compilar:
+gcc -o <salida> <archivo.c> -O[0,1,2,3,fast](optim)
+
+En cluster:
+Correr con SBATCH
