@@ -21,7 +21,8 @@ int *A,*B,*AB;
 int n, T;
 
 /************** MAIN *************/
-int main(int argc, char *argv[]){
+int main(int argc, char *argv[])
+{
 
     /* Check command line parameters */
     if (argc < 3){
@@ -34,12 +35,14 @@ int main(int argc, char *argv[]){
     /* Indexes */
     int i, j;
 
+
+    /* Time measurement */
     double timetick;
 
     /* Getting memory */
-    A=(int*)malloc(sizeof(int)*n*n);
-    B=(int*)malloc(sizeof(int)*n*n); 
-    AB=(int*)malloc(sizeof(int)*n*n);
+    A  = (int*)malloc(sizeof(int)*n*n);
+    B  = (int*)malloc(sizeof(int)*n*n); 
+    AB = (int*)malloc(sizeof(int)*n*n);
 
     printf("Incializando matrices %d x %d\n", n, n);
     // Fill with known pattern for later check
@@ -61,7 +64,7 @@ int main(int argc, char *argv[]){
 
     printf("Calculando A x B con %d threads... \n", T);
     
-    /* Start time mesurement */
+    /* Start time measurement */
     timetick = dwalltime();
 
     /* Create threads */
@@ -145,4 +148,5 @@ void * multipThread (void * ptr) {
     }
     pthread_exit(0);
 }
+
 /*****************************************************************/

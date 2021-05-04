@@ -46,12 +46,13 @@ int main(int argc, char *argv[])
   /* Indexes */
   int i, j, k;
 
+  /* Time measurement */
   double timetick;
 
   /* Getting memory */  
-  A=(int*)malloc(sizeof(int)*n*n); 
-  B=(int*)malloc(sizeof(int)*n*n); 
-  AB=(int*)malloc(sizeof(int)*n*n); 
+  A  = (int*)malloc(sizeof(int)*n*n); 
+  B  = (int*)malloc(sizeof(int)*n*n); 
+  AB = (int*)malloc(sizeof(int)*n*n); 
 
   printf("Incializando matrices %d x %d\n", n, n);
   // A por filas
@@ -229,4 +230,5 @@ void * matmulblks(void * ptr)
   }
   pthread_exit(0);
 }
+
 /*****************************************************************/

@@ -26,7 +26,6 @@ double dwalltime(){
 /************** MAIN *************/
 int main(int argc, char *argv[])
 {
-  int *A,*B,*AB;
   int n, bs;
 
   /* Check command line parameters */
@@ -35,18 +34,23 @@ int main(int argc, char *argv[])
         ((n % bs) != 0)
       )
   {
-    printf("\nError en los parámetros. Usage: ./%s N BS (N debe ser multiplo de BS)\n", argv[0]);
+    printf("\nError en los parámetros. Usage: ./%s n bs (n debe ser multiplo de bs)\n", argv[0]);
     exit(1);
   }
+
+  /* Pointers */
+  int *A,*B,*AB;
+
   /* Indexes */
   int i, j, k;
 
+  /* Time measurement */
   double timetick;
 
   /* Getting memory */  
-  A=(int*)malloc(sizeof(int)*n*n); 
-  B=(int*)malloc(sizeof(int)*n*n); 
-  AB=(int*)malloc(sizeof(int)*n*n); 
+  A  = (int*)malloc(sizeof(int)*n*n); 
+  B  = (int*)malloc(sizeof(int)*n*n); 
+  AB = (int*)malloc(sizeof(int)*n*n); 
 
   printf("Incializando matrices %d x %d\n", n, n);
   // A por filas
@@ -70,7 +74,7 @@ int main(int argc, char *argv[])
 
   printf("Calculando A x B con bloques de %dx%d\n", bs, bs);
 
-  /* Start time mesurement */
+  /* Start time measurement */
   timetick = dwalltime();
 
   /* Calculate A x B */
@@ -187,5 +191,5 @@ void blkmul(int *ablk, int *bblk, int *cblk, int n, int bs)
     }
   }
 }
-    
+
 /*****************************************************************/

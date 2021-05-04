@@ -18,7 +18,6 @@ double dwalltime(){
 /************** MAIN *************/
 int main(int argc, char *argv[])
 {
-  int *A,*B,*AB;
   int n;
 
   /* Check command line parameters */
@@ -29,15 +28,19 @@ int main(int argc, char *argv[])
 
   n = atoi(argv[1]);
 
+  /* Pointers */
+  int *A,*B,*AB;
+
   /* Indexes */
   int i, j, k;
 
+  /* Time measurement */
   double timetick;
 
   /* Getting memory */
-  A=(int*)malloc(sizeof(int)*n*n);
-  B=(int*)malloc(sizeof(int)*n*n); 
-  AB=(int*)malloc(sizeof(int)*n*n);
+  A  = (int*)malloc(sizeof(int)*n*n);
+  B  = (int*)malloc(sizeof(int)*n*n); 
+  AB = (int*)malloc(sizeof(int)*n*n);
 
   printf("Incializando matrices %d x %d\n", n, n);
   // Fill with known pattern for later check
@@ -53,8 +56,9 @@ int main(int argc, char *argv[])
   }
 
   printf("Calculando A x B... \n");
-  /* Start time mesurement */
-    timetick = dwalltime();
+
+  /* Start time measurement */
+  timetick = dwalltime();
 
   multip(A, B, AB, n);
 
