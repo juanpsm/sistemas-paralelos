@@ -2,9 +2,8 @@
 
 #include<stdio.h>
 #include<stdlib.h>   /* malloc() */
-#include<math.h> /* sin y cos */
-#include<sys/time.h>  /* gettimeofday */
-#include<time.h> /* srand((unsigned) time(&t)) */
+#include<sys/time.h> /* gettimeofday */
+
 /* Init square matrix with a specific value */
 void initvalmat(int *mat, int n, int val, int transpose); 
  
@@ -14,18 +13,35 @@ void matmulblks(int *a, int *b, int *c, int n, int bs);
 /* Multiply (block)submatrices */
 void blkmul(int *ablk, int *bblk, int *cblk, int n, int bs);
 
+/* Time calculation */
+double dwalltime(){
+        double sec;
+        struct timeval tv;
+
+        gettimeofday(&tv,NULL);
+        sec = tv.tv_sec + tv.tv_usec/1000000.0;
+        return sec;
+}
+
 /************** MAIN *************/
 int main(int argc, char *argv[])
 {
-  int *A,*B,*AB, avgR;
-  int n, bs, i, j, k;
+  int *A,*B,*AB;
+  int n, bs;
 
   /* Check command line parameters */
-  if ( (argc != 3) || ((n = atoi(argv[1])) <= 0) || ((bs = atoi(argv[2])) <= 0) || ((n % bs) != 0))
+  if  ( (argc != 3) ||
+        ((n = atoi(argv[1])) <= 0) || ((bs = atoi(argv[2])) <= 0) ||
+        ((n % bs) != 0)
+      )
   {
     printf("\nError en los parámetros. Usage: ./%s N BS (N debe ser multiplo de BS)\n", argv[0]);
     exit(1);
   }
+  /* Indexes */
+  int i, j, k;
+
+  double timetick;
 
   /* Getting memory */  
   A=(int*)malloc(sizeof(int)*n*n); 
@@ -33,54 +49,67 @@ int main(int argc, char *argv[])
   AB=(int*)malloc(sizeof(int)*n*n); 
 
   printf("Incializando matrices %d x %d\n", n, n);
+  // A por filas
   initvalmat(A, n, 0, 0);
+  // B por columnas
   initvalmat(B, n, 0, 1);
+  // AB por filas
   initvalmat(AB, n, 0, 0);
+  
+  // Fill with known pattern for later check
   for(i=0;i<n;i++){
     for(j=0;j<n;j++){
-      A[i*n+j]=i+j+1;
+      A[i*n+j] = i+j+1;
     }
   }
   for(i=0;i<n;i++){
     for(j=0;j<n;j++){
-      B[i+n*j]=j+1;
+      B[i+n*j] = j+1;
     }
   }
 
-  printf("Calculando A x B con %d bloques\n", bs);
+  printf("Calculando A x B con bloques de %dx%d\n", bs, bs);
 
-  // Calc A * B
+  /* Start time mesurement */
+  timetick = dwalltime();
+
+  /* Calculate A x B */
   matmulblks(A, B, AB, n, bs);
 
-  // Check
-  if ( n <= 16 ){
-    printf("  A:\n");
-    for(i=0;i<n;i++){
-      for(j=0;j<n;j++){
-        printf(" %d ", A[i*n+j]);
-      }
-      printf("\n");
+  printf(" TIEMPO = %f\n", dwalltime() - timetick);
+
+  /* Check */
+  int * sumfila;
+  sumfila=(int*)malloc(sizeof(int)*n); 
+  int print = (n<=32);
+  if (print) printf("  A:\n");
+  for(i=0;i<n;i++){
+    sumfila[i]=0;
+    for(j=0;j<n;j++){
+      sumfila[i] += A[i*n+j];
+      if (print) printf(" %d ", A[i*n+j]);
     }
-    printf("\n  B:\n");
-    for(i=0;i<n;i++){
-      for(j=0;j<n;j++){
-        printf(" %d ", B[i+j*n]);
-      }
-      printf("\n");
-    }
+    if (print) printf("Suma fila = %d\n", sumfila[i]);
   }
-  printf("\n  AB:\n");
+  if (print) printf("\n  B:\n");
+  for(i=0;i<n;i++){
+    for(j=0;j<n;j++){
+      if (print) printf(" %d ", B[i+j*n]);
+    }
+    if (print) printf("\n");
+  }
+
+  if (print) printf("\n  AB:\n");
   int error = 0;
   for(i=0;i<n;i++){
     for(j=0;j<n;j++){
-      if (AB[i*n+j]!=n && !error){
-        // printf(" Error en  %d %d \n", i, j);
+      if (AB[i*n+j]!=sumfila[i]*(j+1) && !error){
+        printf(" Error en  AB_%d_%d \n", i, j);
         error = 1;
       }
-      // Uncomment to print AB
-      if ( n <= 16 ) printf(" %d ", AB[i*n+j]);
+      if (print)  printf(" %d ", AB[i*n+j]);
     }
-    if ( n <= 16 ) printf("\n");
+    if (print)  printf("\n");
   }
   printf("Resultado ");
   if (error) printf("erroneo.\n"); else printf("correcto.\n");
@@ -126,10 +155,7 @@ void matmulblks(int *a, int *b, int *c, int n, int bs)
   int i, j, k;    /* Guess what... */
 
   /* Init matrix c, just in case */  
-  initvalmat(c, n, 0.0, 0);
-  
-  printf("| i j k |\n | i' j' k' |  AB   |   A  |  B   |    AB    |\n");
-//| 0  0  0  | AB_00 | A_00 | B_00 | 0.000000 | 1.000000 |
+  //initvalmat(c, n, 0.0, 0);
 
   for (i = 0; i < n; i += bs)
   {
@@ -137,8 +163,6 @@ void matmulblks(int *a, int *b, int *c, int n, int bs)
     {
       for  (k = 0; k < n; k += bs)
       {
-        printf("| %d %d %d |\n", i,j,k);
-        // printf("i=%d j=%d k=%d\n", i,j,k);
         blkmul(&a[i*n + k], &b[j*n + k], &c[i*n + j], n, bs);
       }
     }
@@ -158,14 +182,10 @@ void blkmul(int *ablk, int *bblk, int *cblk, int n, int bs)
     {
       for  (k = 0; k < bs; k++)
       {
-        printf(" | %d  %d  %d  |", i,j,k);
-        printf(" AB_%d%d | A_%d%d | B_%d%d |", i,j, i,k, k,j);
         cblk[i*n + j] += ablk[i*n + k] * bblk[j*n + k];
-        printf(" %d |\n", cblk[i*n+j]);
       }
     }
   }
 }
     
 /*****************************************************************/
-
