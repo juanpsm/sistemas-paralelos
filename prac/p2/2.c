@@ -59,6 +59,7 @@ int main(int argc, char* argv[]){
     pthread_attr_t attr;
     pthread_t threads[T] ;
     pthread_attr_init(&attr);
+    pthread_mutex_init(&lock, NULL);
 
     printf("Buscando elemento %d en arreglo\n", X);
     timetick = dwalltime();

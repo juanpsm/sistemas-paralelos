@@ -62,6 +62,7 @@ int main(int argc, char* argv[]){
     pthread_attr_t attr;
     pthread_t threads[T] ;
     pthread_attr_init(&attr);
+    pthread_mutex_init(&lock, NULL);
 
     // este se va a usar para ir agregando los elementos comunes a A B
     shared_index=0;
@@ -132,6 +133,8 @@ void * intersect (void * ptr) {
             if (A[i] == B[j]) {
                 // fijarse si el elem ya esta en AB y no agregarlo o eliminar despues los repetidos?
                 // tambien se puede ahorrar comprobando si el elem actual de a ya "Lo hice"
+
+                // Segun el ayu considerar que nos conjuntos no tienen elementos repetidos
 
                 pthread_mutex_lock(&lock);
                 // agregar_sin_repeticion(AB,shared_index,A[i])
