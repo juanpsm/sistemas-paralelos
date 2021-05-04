@@ -88,8 +88,8 @@ int main(int argc, char *argv[])
   }
   
   /* Averages initialization */
-  avgR1 = 0;
-  avgR2 = 0;
+  avgR1 = 0.0;
+  avgR2 = 0.0;
 
   printf("Calculando ... \n");
 

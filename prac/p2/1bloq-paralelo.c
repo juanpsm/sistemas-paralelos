@@ -84,7 +84,7 @@ int main(int argc, char *argv[])
   printf("  HILOS:   %d\n", T);
   printf("  %.2f tiras x hilo\n\n", n/bs / (double) T);
 
-  /* Start time mesurement */
+  /* Start time measurement */
   timetick = dwalltime();
 
   /* Create threads */
@@ -177,7 +177,6 @@ void * matmulblks(void * ptr)
   id = *((int *) ptr);
   int i,j,k,ii,jj,kk, start_row, end_row;
   int *ablk, *bblk, *cblk;
-  double cant;
 
   // La cantidad de "tiras" de bloques es N/BS. Tengo que repartir entre los procesos estas tiras.
   // Los "saltos" de esta tira es i: [ 0, BS, 2*BS, ... , ((N/BS)-1)*BS ]     (N/BS)*BS = N ya no entra
