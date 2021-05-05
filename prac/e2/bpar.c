@@ -114,7 +114,10 @@ int main(int argc, char *argv[])
   pthread_barrier_init (&barrier_R_ready, NULL, Th);
   pthread_barrier_init (&barrier_averages_ready, NULL, Th);
 
-  printf("Calculando ... \n");
+  printf("Calculando con bloques de %dx%d\n", bs, bs);
+  printf("  Tiras:   %d\n", n/bs);
+  printf("  HILOS:   %d\n", Th);
+  printf("  %.2f tiras x hilo\n\n", n/bs / (double) Th);
 
   /* Start time measurement */
   timetick = dwalltime();
@@ -188,7 +191,7 @@ void * calculate(void * ptr)
   if (end_row > n) end_row = n;
 
   // debug info
-  printf("(%d) El hilo %d hará %d filas  ->  for i = %d .. %d\n",id, id, end_row-start_row, start_row, end_row);
+  // printf("(%d) El hilo %d hará %d filas  ->  for i = %d .. %d\n",id, id, end_row-start_row, start_row, end_row);
 
 
   /* Calculate R1, R2 and their averages */
@@ -265,7 +268,7 @@ void * calculate(void * ptr)
     avgR2 += local_avgR2;
   pthread_mutex_unlock(&mutex_avgR2);
 
-  /* Only one divides the accumulated, butwe need a barrier. Every thread must have finished accumulating the average*/
+  /* Only one divides the accumulated, but we need a barrier. Every thread must have finished accumulating the average*/
   pthread_barrier_wait (&barrier_R_ready);
 
   /* Thanks to the previous barrier, you can be sure no one is accessing the

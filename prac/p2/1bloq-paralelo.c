@@ -22,7 +22,7 @@ double dwalltime(){
         return sec;
 }
 
-// Shared variables
+/* Shared variables */
 int *A,*B,*AB;
 int n, T, bs;
 
@@ -198,10 +198,7 @@ void * matmulblks(void * ptr)
   if (end_row > n) end_row = n;
 
   // debug info
-  printf("(%d) El hilo %d hará %d tiras  ->",id, id, bloqf-bloqi);
-  printf("  bloque inicial: %d", bloqi);
-  printf("  bloque final: %d (no incl) ->", bloqf);
-  printf("  for i = %d .. %d (no incl)\n", start_row, end_row);
+    printf("(%d) El hilo %d hará %d tiras  ->  bloque inicial: %d  bloque final: %d (no incl) ->  for i = %d .. %d (no incl)\n",id, id, bloqf-bloqi, bloqi, bloqf, start_row, end_row);
 
   /* Block iteration */
   for (i = start_row; i < end_row; i+=bs)

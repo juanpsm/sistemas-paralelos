@@ -105,6 +105,8 @@ int main(int argc, char *argv[])
   pthread_barrier_init (&barrier_averages_ready, NULL, Th);
 
   printf("Calculando ... \n");
+  printf("  HILOS:   %d\n", Th);
+  printf("  %.2f filas x hilo\n\n", n / (double) Th);
 
   /* Start time measurement */
   timetick = dwalltime();
@@ -152,7 +154,7 @@ void * calculate (void * ptr) {
   local_avgR2 = 0.0;
   
   // debug info
-  printf("(%d) El hilo %d hará %d filas  ->  for i = %d .. %d (no incl)\n",id, id, end_row-start_row, start_row, end_row);
+  // printf("(%d) El hilo %d hará %d filas  ->  for i = %d .. %d (no incl)\n",id, id, end_row-start_row, start_row, end_row);
 
   /* Calculate R1, R2 and their averages */
   // también se puede hacer cada cosa en for distintos

@@ -136,8 +136,7 @@ void * multipThread (void * ptr) {
     end_row = (id+1)*n/T;
     
     // debug info
-    printf("(%d) El hilo %d hará %d filas  ->",id, id, end_row-start_row);
-    printf("  for i = %d .. %d (no incl)\n", start_row, end_row);
+    printf("(%d) El hilo %d hará %d filas  ->  for i = %d .. %d (no incl)\n",id, id, end_row-start_row, start_row, end_row);
 
     for(i = start_row; i < end_row; i++){
         for(j=0;j<n;j++){

@@ -91,7 +91,8 @@ int main(int argc, char *argv[])
   avgR1 = 0.0;
   avgR2 = 0.0;
 
-  printf("Calculando ... \n");
+  printf("Calculando con bloques de %dx%d\n", bs, bs);
+  printf("  Tiras:   %d\n", n/bs);
 
   /* Start time measurement */
   timetick = dwalltime();
