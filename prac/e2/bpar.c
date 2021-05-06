@@ -10,7 +10,7 @@
 /* Inicializar matriz cuadrada con un valor específico */
 void initvalmat(double *mat, int n, double val, int transpose); 
  
-/* Multiplicar matrices cuadradas, para pthreads */
+/* Multiplicar matrices cuadradas, por bloques, para pthreads */
 void * calculate (void * ptr);
 
 /* Para calcular el tiempo */
@@ -186,8 +186,8 @@ void * calculate(void * ptr)
   double local_avgR1, local_avgR2, sinPhi, cosPhi;
   double *ablk, *bblk, *cblk;
 
-  /* Cada hilo obtiene ciertas filas sobre las que operará */
   int tiras = (int) ceil(n/bs / (double) Th);
+  /* Cada hilo obtiene ciertas filas sobre las que operará */
   start_row = id * tiras * bs;
   end_row = (id+1) * tiras * bs;
   // Si acotamos el end_row, no entrará a los for los hilos que sobren
