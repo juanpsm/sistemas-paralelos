@@ -39,7 +39,6 @@ int n, Th, bs;
 pthread_mutex_t mutex_avgR1;
 pthread_mutex_t mutex_avgR2;
 
-pthread_barrier_t   barrier_R_ready;
 pthread_barrier_t   barrier_averages_ready;
 
 /************** MAIN *************/
@@ -111,7 +110,6 @@ int main(int argc, char *argv[])
   pthread_mutex_init(&mutex_avgR1, NULL);
   pthread_mutex_init(&mutex_avgR2, NULL);
 
-  pthread_barrier_init (&barrier_R_ready, NULL, Th);
   pthread_barrier_init (&barrier_averages_ready, NULL, Th);
 
   printf("Calculando con bloques de %dx%d\n", bs, bs);
@@ -143,6 +141,10 @@ int main(int argc, char *argv[])
   free(T);
   free(R1A);
   free(R2B);
+
+  pthread_mutex_destroy(&mutex_avgR1);
+  pthread_mutex_destroy(&mutex_avgR2);
+  pthread_barrier_destroy(&barrier_averages_ready);
   
   return 0;
 }
@@ -184,24 +186,30 @@ void * calculate(void * ptr)
   double local_avgR1, local_avgR2, sinPhi, cosPhi;
   double *ablk, *bblk, *cblk;
 
+  /* Cada hilo obtiene ciertas filas sobre las que operará */
   int tiras = (int) ceil(n/bs / (double) Th);
   start_row = id * tiras * bs;
   end_row = (id+1) * tiras * bs;
   // Si acotamos el end_row, no entrará a los for los hilos que sobren
   if (end_row > n) end_row = n;
 
+  /* Inicializar acumuladores para promedios*/
+  local_avgR1 = 0.0;
+  local_avgR2 = 0.0;
+
   // debug info
   // printf("(%d) El hilo %d hará %d filas  ->  for i = %d .. %d\n",id, id, end_row-start_row, start_row, end_row);
 
-
   /* Calcular R1, R2 y acumular para los promedios */
-  for (i = start_row; i < end_row; i++){
+  for(i = start_row; i < end_row; i++){
     for(j=0;j<n;j++){
       k = i*n+j;
       sinPhi = sin(M[k]);
       cosPhi = cos(M[k]);
+
       R1[k] = (1-T[k])*(1-cosPhi)+T[k]*sinPhi;
       local_avgR1 += R1[k];
+
       R2[k] = (1-T[k])*(1-sinPhi)+T[k]*cosPhi;
       local_avgR2 += R2[k];
     }
@@ -261,26 +269,14 @@ void * calculate(void * ptr)
 
   /* Actualizar promedio compartido */
   pthread_mutex_lock(&mutex_avgR1);
-    avgR1 += local_avgR1/();
+    avgR1 += local_avgR1 / (n*n);
   pthread_mutex_unlock(&mutex_avgR1);
 
   pthread_mutex_lock(&mutex_avgR2);
-    avgR2 += local_avgR2;
+    avgR2 += local_avgR2 / (n*n);
   pthread_mutex_unlock(&mutex_avgR2);
 
-  /* Solo uno divide al total para obtener el promedio */
-  pthread_barrier_wait (&barrier_R_ready);
-
-  /* Thanks to the previous barrier, you can be sure no one is accessing the
-    averages, so no need to lock. */
-  if (id = 0) {
-    avgR1 = avgR1 / (n*n);
-    avgR2 = avgR2 / (n*n);
-    // V(s)*Th
-  }
-
-  // P(s)
-  /* Now we need another barrier in order to calculate C, the averages must be complete */
+  /* Ahora se necesita una barrera, ya que para hacer los calculos de C deben estar completos los promedios */
   pthread_barrier_wait (&barrier_averages_ready);
 
   /* Calcular C */
