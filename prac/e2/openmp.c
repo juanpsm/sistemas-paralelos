@@ -7,13 +7,13 @@
 #include<time.h>     /* srand((unsigned) time(&t)) */
 #include<omp.h>      /* hilos */
 
-/* Inicializar matriz cuadrada con un valor específico */
+/* Init square matrix with a specific value */
 void initvalmat(double *mat, int n, double val, int transpose); 
  
-/* Multiplicar matrices cuadradas, por bloques, for OpenMP */
+/* Multiply square matrices, blocked version, for OpenMP */
 void calculate();
 
-/* Para calcular el tiempo */
+/* Time calculation */
 double dwalltime(){
         double sec;
         struct timeval tv;
@@ -23,7 +23,7 @@ double dwalltime(){
         return sec;
 }
 
-/* Generación de números aleatorios */
+/* Random number generation */
 double randFP(double min, double max) {
   double range = (max - min);
   double div = RAND_MAX / range;
@@ -32,7 +32,7 @@ double randFP(double min, double max) {
 
 #define PI 3.14159265358979323846
 
-/* Variables compartidas */
+/* Shared variables */
 double *A,*B,*C,*R1,*R2,*T,*M,*R1A,*R2B, avgR1, avgR2;
 int n, Th, bs;
 
@@ -40,7 +40,7 @@ int n, Th, bs;
 int main(int argc, char *argv[])
 {
 
-  /* Verificar parámetros */
+  /* Check command line parameters */
   if  ( (argc != 4) ||
         ((n = atoi(argv[1])) <= 0) || ((bs = atoi(argv[2])) <= 0) || ((Th = atoi(argv[3])) <= 0)
       )
@@ -54,17 +54,17 @@ int main(int argc, char *argv[])
     exit(1);
   }
 
-/* Para números aleatorios */
+/* Random numbers */
   time_t t;
   srand((unsigned) time(&t));
 
-  /* Índices */
+  /* Indexes */
   int i, j;
 
-  /* Para medir el tiempo */
+  /* Time measurement */
   double timetick;
 
-  /* Alocar memoria */  
+  /* Getting memory */  
   A   = (double*)malloc(sizeof(double)*n*n); 
   B   = (double*)malloc(sizeof(double)*n*n); 
   C   = (double*)malloc(sizeof(double)*n*n); 
@@ -76,23 +76,23 @@ int main(int argc, char *argv[])
   R2B = (double*)malloc(sizeof(double)*n*n);  
 
   printf("Incializando matrices %d x %d\n", n, n);
-  /* A y B por columna */
+  /* A and B by column */
   initvalmat(A,   n, 1.0, 1);
   initvalmat(B,   n, 1.0, 1);
-  /* El resto por filas */
+  /* The rest by rows */
   initvalmat(T,   n, 1.0, 0);
   initvalmat(C,   n, 0.0, 0);
   initvalmat(R1A, n, 0.0, 0);
   initvalmat(R2B, n, 0.0, 0);
 
-  /* Rellenar M con valores aleatorios entre 0 y 2Pi */
+  /* Fill M matrix with random values beetween 0 an 2*Pi */
   for(i=0;i<n;i++){
     for(j=0;j<n;j++){
       M[i*n+j] = randFP(0, 2*PI);
     }
   }
 
-  /* Inicializar promedios */
+  /* Averages initialization */
   avgR1 = 0.0;
   avgR2 = 0.0;
 
@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
   printf("  HILOS:   %d\n", Th);
   printf("  %.2f tiras x hilo\n\n", n/bs / (double) Th);
 
-  /* Empieza a medir el tiempo */
+  /* Start time measurement */
   timetick = dwalltime();
   
   /* Calcular */
@@ -125,10 +125,10 @@ int main(int argc, char *argv[])
 
 /*****************************************************************/
 
-/* Inicializar matriz cuadrada con un valor específico */
+/* Init square matrix with a specific value */
 void initvalmat(double *mat, int n, double val, int transpose)
 {
-  int i, j;      /* Índices */
+  int i, j;      /* Indexes */
 
 	if (transpose == 0) {
 	  for (i = 0; i < n; i++)
@@ -151,18 +151,18 @@ void initvalmat(double *mat, int n, double val, int transpose)
 
 /*****************************************************************/
 
-/* Multiplicar matrices cuadradas, por bloques */
+/* Multiply square matrices, blocked version */
 void calculate()
 {
   int i,j,k,ii,jj,kk, start_row, end_row;
   double local_avgR1, local_avgR2, sinPhi, cosPhi;
   double *ablk, *bblk, *cblk;
-
-  #pragma omp parallel private(i,j,k,ii,jj,kk, start_row, end_row)
+  int tiras = (int) ceil(n/bs / (double) Th);
+  
+  #pragma omp parallel private(i,j,k,ii,jj,kk,local_avgR1, local_avgR2, sinPhi, cosPhi, start_row, end_row, ablk, bblk, cblk)
   {
     int id = omp_get_thread_num();
-
-    int tiras = (int) ceil(n/bs / (double) Th);
+    
     start_row = id * tiras * bs;
     end_row = (id+1) * tiras * bs;
     // Si acotamos el end_row, no entrará a los for los hilos que sobren
@@ -172,7 +172,7 @@ void calculate()
     // printf("(%d) El hilo %d hará %d filas  ->  for i = %d .. %d\n",id, id, end_row-start_row, start_row, end_row);
 
 
-    /* Calcular R1, R2 y acumular para los promedios */
+    /* Calculate R1, R2 and their averages */
     for (i = start_row; i < end_row; i++){
       for(j=0;j<n;j++){
         k = i*n+j;
@@ -185,8 +185,8 @@ void calculate()
       }
     }
 
-    /* Calcular R1 * A */
-    /* Iteraciones por bloques  */
+    /* Calculate R1 * A */
+    /* Block iteration */
     for (i = start_row; i < end_row; i+=bs)
     { 
       for (j = 0; j < n; j+=bs)
@@ -196,7 +196,7 @@ void calculate()
         { 
           ablk = &R1[i*n + k];
           bblk = &A[j*n + k];
-            /* Iteraciones dentro de cada  bloque  */
+          /* Inner row itetarions */
           for (ii=0; ii < bs; ii++)
           {
             for (jj = 0; jj < bs; jj++)
@@ -211,8 +211,8 @@ void calculate()
       }
     }
 
-    /* Calcular R2 * B */
-    /* Iteraciones por bloques  */
+    /* Calculate R2 * B */
+    /* Block iteration */
     for (i = start_row; i < end_row; i+=bs)
     { 
       for (j = 0; j < n; j+=bs)
@@ -222,7 +222,7 @@ void calculate()
         { 
           ablk = &R2[i*n + k];
           bblk = &B[j*n + k];
-            /* Iteraciones dentro de cada  bloque  */
+          /* Inner row itetarions */
           for (ii=0; ii < bs; ii++)
           {
             for (jj = 0; jj < bs; jj++)
@@ -237,17 +237,29 @@ void calculate()
       }
     }
 
-    /* Actualizar promedio compartido */
-
-    /* Actualizar promedio compartido */
-
+    /* Update shared average */
+    #pragma omp critical
+    {
+     avgR1 += local_avgR1;
+    }
+    /* Update shared average */
+    #pragma omp critical
+    {
+     avgR2 += local_avgR1;
+    }
     /* Barrier */
-
-    /* Calcular C */
+    #pragma omp barrier
+    #pragma omp single
+    {
+    avgR1 = avgR1/(n*n);
+    avgR2 = avgR2/(n*n);
+    }
+    /* Calculate C */
     for(i = start_row; i < end_row; i++){
       for(j=0;j<n;j++){
         k = i*n+j;
         C[k] = T[k] + avgR1 * avgR2 * (R1A[k] + R2B[k]);
+        //printf("C[%d] = %f \n",k, C[k]);
       }
     }
   }
