@@ -4,16 +4,16 @@
 #include<stdlib.h>   /* malloc() */
 #include<sys/time.h> /* gettimeofday */
 
-/* Init square matrix with a specific value */
+/* Inicializar matriz cuadrada con un valor específico */
 void initvalmat(int *mat, int n, int val, int transpose); 
  
-/* Multiply square matrices, blocked version */
+/* Multiplicar matrices cuadradas, por bloques */
 void matmulblks(int *a, int *b, int *c, int n, int bs);
 
-/* Multiply (block)submatrices */
+/* Multiplicar submatrices (bloques) */
 void blkmul(int *ablk, int *bblk, int *cblk, int n, int bs);
 
-/* Time calculation */
+/* Para calcular el tiempo */
 double dwalltime(){
         double sec;
         struct timeval tv;
@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
 {
   int n, bs;
 
-  /* Check command line parameters */
+  /* Verificar parámetros */
   if  ( (argc != 3) ||
         ((n = atoi(argv[1])) <= 0) || ((bs = atoi(argv[2])) <= 0) ||
         ((n % bs) != 0)
@@ -38,16 +38,16 @@ int main(int argc, char *argv[])
     exit(1);
   }
 
-  /* Pointers */
+  /* Punteros */
   int *A,*B,*AB;
 
-  /* Indexes */
+  /* Índices */
   int i, j, k;
 
-  /* Time measurement */
+  /* Para medir el tiempo */
   double timetick;
 
-  /* Getting memory */  
+  /* Alocar memoria */  
   A  = (int*)malloc(sizeof(int)*n*n); 
   B  = (int*)malloc(sizeof(int)*n*n); 
   AB = (int*)malloc(sizeof(int)*n*n); 
@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
 
   printf("Calculando A x B con bloques de %dx%d\n", bs, bs);
 
-  /* Start time measurement */
+  /* Empieza a medir el tiempo */
   timetick = dwalltime();
 
   /* Calculate A x B */
@@ -127,10 +127,10 @@ int main(int argc, char *argv[])
 
 /*****************************************************************/
 
-/* Init square matrix with a specific value */
+/* Inicializar matriz cuadrada con un valor específico */
 void initvalmat(int *mat, int n, int val, int transpose)
 {
-  int i, j;      /* Indexes */
+  int i, j;      /* Índices */
 
 	if (transpose == 0) {
 	  for (i = 0; i < n; i++)
@@ -153,10 +153,10 @@ void initvalmat(int *mat, int n, int val, int transpose)
 
 /*****************************************************************/
 
-/* Multiply square matrices, blocked version */
+/* Multiplicar matrices cuadradas, por bloques */
 void matmulblks(int *a, int *b, int *c, int n, int bs)
 {
-  int i, j, k;    /* Guess what... */
+  int i, j, k;
 
   /* Init matrix c, just in case */  
   //initvalmat(c, n, 0.0, 0);
@@ -175,10 +175,10 @@ void matmulblks(int *a, int *b, int *c, int n, int bs)
 
 /*****************************************************************/
 
-/* Multiply (block)submatrices */
+/* Multiplicar submatrices (bloques) */
 void blkmul(int *ablk, int *bblk, int *cblk, int n, int bs)
 {
-  int i, j, k;    /* Guess what... again... */
+  int i, j, k;
 
   for (i = 0; i < bs; i++)
   {

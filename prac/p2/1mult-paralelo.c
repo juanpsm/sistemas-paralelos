@@ -6,7 +6,7 @@
 /* Multiply matrices, for pthreads */
 void * multipThread (void * ptr);
 
-/* Time calculation */
+/* Para calcular el tiempo */
 double dwalltime(){
         double sec;
         struct timeval tv;
@@ -16,7 +16,7 @@ double dwalltime(){
         return sec;
 }
 
-// Shared variables
+// Variables compartidas
 int *A,*B,*AB;
 int n, T;
 
@@ -24,7 +24,7 @@ int n, T;
 int main(int argc, char *argv[])
 {
 
-    /* Check command line parameters */
+    /* Verificar parámetros */
     if (argc < 3){
 	    printf("\nFaltan argumentos. Usar %s n T",argv[0]);
 	    exit(1);
@@ -32,14 +32,14 @@ int main(int argc, char *argv[])
     n = atoi(argv[1]);
     T = atoi(argv[2]);
 
-    /* Indexes */
+    /* Índices */
     int i, j;
 
 
-    /* Time measurement */
+    /* Para medir el tiempo */
     double timetick;
 
-    /* Getting memory */
+    /* Alocar memoria */
     A  = (int*)malloc(sizeof(int)*n*n);
     B  = (int*)malloc(sizeof(int)*n*n); 
     AB = (int*)malloc(sizeof(int)*n*n);
@@ -64,10 +64,10 @@ int main(int argc, char *argv[])
 
     printf("Calculando A x B con %d threads... \n", T);
     
-    /* Start time measurement */
+    /* Empieza a medir el tiempo */
     timetick = dwalltime();
 
-    /* Create threads */
+    /* Crear hilos */
     for (id = 0; id < T; id++) {
         ids[id] = id;
         pthread_create(&threads[id], &attr, multipThread, &ids[id]);
@@ -131,7 +131,7 @@ void * multipThread (void * ptr) {
     id = *((int *) ptr);
     int i,j,k,start_row,end_row;
     
-    /* Each thread get some rows to operate with */
+    /* Cada hilo obtiene ciertas filas sobre las que operará */
     start_row = id*n/T;
     end_row = (id+1)*n/T;
     

@@ -4,7 +4,7 @@
 #include<math.h>     /* sin y cos */
 #include<time.h>     /* srand((unsigned) time(&t)) */
 
-/* Time calculation */
+/* Para calcular el tiempo */
 double dwalltime(){
         double sec;
         struct timeval tv;
@@ -14,7 +14,7 @@ double dwalltime(){
         return sec;
 }
 
-/* Random number generation */
+/* Generación de números aleatorios */
 double randFP(double min, double max) {
   double range = (max - min);
   double div = RAND_MAX / range;
@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
 {
   int n;
 
-  /* Check command line parameters */
+  /* Verificar parámetros */
   if (argc < 2) {
 	  printf("\nFalta argumento. Usar %s n",argv[0]);
 	  exit(1);
@@ -36,20 +36,20 @@ int main(int argc, char *argv[])
 
   n = atoi(argv[1]);
 
-  /* Random numbers */
+  /* Para números aleatorios */
   time_t t;
   srand((unsigned) time(&t));
 
-  /* Pointers */
+  /* Punteros */
   double *A,*B,*C,*R1,*R2,*T,*M,*R1A,*R2B, avgR1, avgR2, sinPhi, cosPhi;
 
-  /* Indexes */
+  /* Índices */
   int i, j, k;
 
-  /* Time measurement */
+  /* Para medir el tiempo */
   double timetick;
 
-  /* Getting memory */
+  /* Alocar memoria */
   A   = (double*)malloc(sizeof(double)*n*n); 
   B   = (double*)malloc(sizeof(double)*n*n); 
   C   = (double*)malloc(sizeof(double)*n*n); 
@@ -63,31 +63,30 @@ int main(int argc, char *argv[])
   printf("Incializando matrices %d x %d\n", n, n);
   for(i=0;i<n;i++){
     for(j=0;j<n;j++){
-      /* A and B by column */
+      /* A y B por columna */
       A[i+j*n]=1.0;
       B[i+j*n]=1.0;
-      /* The rest by rows */
+      /* El resto por filas */
       T[i*n+j]=1.0;
       /* Zero then += */
       C[i*n+j]=0.0;
       R1A[i*n+j]=0.0;
       R2B[i*n+j]=0.0;
-      /* Fill M matrix with random values beetween 0 an 2*Pi */
+      /* Rellenar M con valores aleatorios entre 0 y 2Pi */
       M[i*n+j] = randFP(0, 2*PI);
     }
   }
   
-  /* Averages initialization */
-  avgR1 = 0;
-  avgR2 = 0;
+  /* Inicializar promedios */
+  avgR1 = 0.0;
+  avgR2 = 0.0;
 
   printf("Calculando ... \n");
 
-  /* Start time measurement */
+  /* Empieza a medir el tiempo */
   timetick = dwalltime();
 
-  /* Calculate R1, R2 and their averages */
-  // también se puede hacer cada cosa en for distintos
+  /* Calcular R1, R2 y acumular para los promedios */
   for(i=0;i<n;i++){
     for(j=0;j<n;j++){
       k = i*n+j;
@@ -101,9 +100,8 @@ int main(int argc, char *argv[])
   }
   avgR1 = avgR1 / (n*n);
   avgR2 = avgR2 / (n*n);
-// en el paralelo si divido x filas los promedios quedan "parciales"
 
-  /* Calculate R1 * A */
+  /* Calcular R1 * A */
   for(i=0;i<n;i++){
     for(j=0;j<n;j++){
       for(k=0;k<n;k++){
@@ -111,7 +109,7 @@ int main(int argc, char *argv[])
       }
     }
   }
-  /* Calculate R2 * B */
+  /* Calcular R2 * B */
   for(i=0;i<n;i++){
     for(j=0;j<n;j++){
       for(k=0;k<n;k++){
@@ -120,9 +118,7 @@ int main(int argc, char *argv[])
     }
   }
 
-  // aca iria una barrera que debe abrirse cuando esten listos los promedios
-
-  /* Calculate C */
+  /* Calcular C */
   for(i=0;i<n;i++){
     for(j=0;j<n;j++){
       k = i*n+j;

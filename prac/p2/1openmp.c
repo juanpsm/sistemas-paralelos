@@ -6,13 +6,13 @@
 #include<math.h>     /* sin y cos */
 #include<omp.h>      /* hilos */
 
-/* Init square matrix with a specific value */
+/* Inicializar matriz cuadrada con un valor específico */
 void initvalmat(int *mat, int n, int val, int transpose); 
  
-/* Multiply square matrices, blocked version, for OpenMP */
+/* Multiplicar matrices cuadradas, por bloques, for OpenMP */
 void matmulblks();
 
-/* Time calculation */
+/* Para calcular el tiempo */
 double dwalltime(){
         double sec;
         struct timeval tv;
@@ -22,14 +22,14 @@ double dwalltime(){
         return sec;
 }
 
-/* Shared variables */
+/* Variables compartidas */
 int *A,*B,*AB;
 int n, T, bs;
 
 /************** MAIN *************/
 int main(int argc, char *argv[])
 {
-  /* Check command line parameters */
+  /* Verificar parámetros */
   if  ( (argc != 4) ||
         ((n = atoi(argv[1])) <= 0) || ((bs = atoi(argv[2])) <= 0) || ((T = atoi(argv[3])) <= 0)
       )
@@ -43,13 +43,13 @@ int main(int argc, char *argv[])
     exit(1);
   }
 
-  /* Indexes */
+  /* Índices */
   int i, j, k;
 
-  /* Time measurement */
+  /* Para medir el tiempo */
   double timetick;
 
-  /* Getting memory */  
+  /* Alocar memoria */  
   A  = (int*)malloc(sizeof(int)*n*n); 
   B  = (int*)malloc(sizeof(int)*n*n); 
   AB = (int*)malloc(sizeof(int)*n*n); 
@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
   printf("  HILOS:   %d\n", T);
   printf("  %.2f tiras x hilo\n\n", n/bs / (double) T);
 
-  /* Start time measurement */
+  /* Empieza a medir el tiempo */
   timetick = dwalltime();
   
   /* Calcular */
@@ -134,10 +134,10 @@ int main(int argc, char *argv[])
 
 /*****************************************************************/
 
-/* Init square matrix with a specific value */
+/* Inicializar matriz cuadrada con un valor específico */
 void initvalmat(int *mat, int n, int val, int transpose)
 {
-  int i, j;      /* Indexes */
+  int i, j;      /* Índices */
 
 	if (transpose == 0) {
 	  for (i = 0; i < n; i++)
@@ -160,7 +160,7 @@ void initvalmat(int *mat, int n, int val, int transpose)
 
 /*****************************************************************/
 
-/* Multiply square matrices, blocked version */
+/* Multiplicar matrices cuadradas, por bloques */
 void matmulblks()
 {
   int i,j,k,ii,jj,kk, start_row, end_row;
@@ -191,7 +191,7 @@ void matmulblks()
     // debug info
     printf("(%d) El hilo %d hará %d tiras  ->  bloque inicial: %d  bloque final: %d (no incl) ->  for i = %d .. %d (no incl)\n",id, id, bloqf-bloqi, bloqi, bloqf, start_row, end_row);
 
-    /* Block iteration */
+    /* Iteraciones por bloques  */
     for (i = start_row; i < end_row; i+=bs)
     { 
       for (j = 0; j < n; j+=bs)
@@ -201,7 +201,7 @@ void matmulblks()
         {
           ablk = &A[i*n + k];
           bblk = &B[j*n + k];
-          /* Inner row itetarions */
+            /* Iteraciones dentro de cada  bloque  */
           for (ii=0; ii < bs; ii++)
           {
             for (jj = 0; jj < bs; jj++)

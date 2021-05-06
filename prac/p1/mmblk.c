@@ -4,13 +4,13 @@
 #include<stdio.h>
 #include<stdlib.h>   /* malloc() */
 
-/* Init square matrix with a specific value */
+/* Inicializar matriz cuadrada con un valor específico */
 void initvalmat(double *mat, int n, double val, int transpose); 
  
-/* Multiply square matrices, blocked version */
+/* Multiplicar matrices cuadradas, por bloques */
 void matmulblks(double *a, double *b, double *c, int n, int bs);
 
-/* Multiply (block)submatrices */
+/* Multiplicar submatrices (bloques) */
 void blkmul(double *ablk, double *bblk, double *cblk, int n, int bs);
 
 /* Time in seconds from some point in the past */
@@ -26,14 +26,14 @@ int main(int argc, char *argv[])
 
   double timetick;
 
-  /* Check command line parameters */
+  /* Verificar parámetros */
   if ( (argc != 3) || ((n = atoi(argv[1])) <= 0) || ((bs = atoi(argv[2])) <= 0) || ((n % bs) != 0))
   {
-    printf("\nError en los par�metros. Usage: ./%s N BS (N debe ser multiplo de BS)\n", argv[0]);
+    printf("\nError en los par�metros. Usage: ./%s N BS (N debe ser multiplo de BS)\n", argv[0]);
     exit(1);
   }
 
-  /* Getting memory */  
+  /* Alocar memoria */  
   a = (double *) malloc(n*n*sizeof(double));
   b = (double *) malloc(n*n*sizeof(double));
   c = (double *) malloc(n*n*sizeof(double));
@@ -69,10 +69,10 @@ int main(int argc, char *argv[])
 
 /*****************************************************************/
 
-/* Init square matrix with a specific value */
+/* Inicializar matriz cuadrada con un valor específico */
 void initvalmat(double *mat, int n, double val, int transpose)
 {
-  int i, j;      /* Indexes */
+  int i, j;      /* Índices */
 
 	if (transpose == 0) {
 	  for (i = 0; i < n; i++)
@@ -95,7 +95,7 @@ void initvalmat(double *mat, int n, double val, int transpose)
 
 /*****************************************************************/
 
-/* Multiply square matrices, blocked version */
+/* Multiplicar matrices cuadradas, por bloques */
 void matmulblks(double *a, double *b, double *c, int n, int bs)
 {
   int i, j, k;    /* Guess what... */
@@ -117,10 +117,10 @@ void matmulblks(double *a, double *b, double *c, int n, int bs)
 
 /*****************************************************************/
 
-/* Multiply (block)submatrices */
+/* Multiplicar submatrices (bloques) */
 void blkmul(double *ablk, double *bblk, double *cblk, int n, int bs)
 {
-  int i, j, k;    /* Guess what... again... */
+  int i, j, k;
 
   for (i = 0; i < bs; i++)
   {

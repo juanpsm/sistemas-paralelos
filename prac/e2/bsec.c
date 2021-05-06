@@ -6,16 +6,16 @@
 #include<math.h>     /* sin y cos */
 #include<time.h>     /* srand((unsigned) time(&t)) */
 
-/* Init square matrix with a specific value */
+/* Inicializar matriz cuadrada con un valor específico */
 void initvalmat(double *mat, int n, double val, int transpose); 
  
-/* Multiply square matrices, blocked version */
+/* Multiplicar matrices cuadradas, por bloques */
 void matmulblks(double *a, double *b, double *c, int n, int bs);
 
-/* Multiply (block)submatrices */
+/* Multiplicar submatrices (bloques) */
 void blkmul(double *ablk, double *bblk, double *cblk, int n, int bs);
 
-/* Time calculation */
+/* Para calcular el tiempo */
 double dwalltime(){
         double sec;
         struct timeval tv;
@@ -25,7 +25,7 @@ double dwalltime(){
         return sec;
 }
 
-/* Random number generation */
+/* Generación de números aleatorios */
 double randFP(double min, double max) {
   double range = (max - min);
   double div = RAND_MAX / range;
@@ -39,27 +39,27 @@ int main(int argc, char *argv[])
 {
   int n, bs;
 
-  /* Check command line parameters */
+  /* Verificar parámetros */
   if ( (argc != 3) || ((n = atoi(argv[1])) <= 0) || ((bs = atoi(argv[2])) <= 0) || ((n % bs) != 0))
   {
     printf("\nError en los parámetros. Usage: ./%s n bs (n debe ser multiplo de bs)\n", argv[0]);
     exit(1);
   }
   
-  /* Random numbers */
+  /* Para números aleatorios */
   time_t t;
   srand((unsigned) time(&t));
 
-  /* Pointers */
+  /* Punteros */
   double *A,*B,*C,*R1,*R2,*T,*M,*R1A,*R2B, avgR1, avgR2, sinPhi, cosPhi;
 
-  /* Indexes */
+  /* Índices */
   int i, j, k;
 
-  /* Time measurement */
+  /* Para medir el tiempo */
   double timetick;
 
-  /* Getting memory */
+  /* Alocar memoria */
   A   = (double*)malloc(sizeof(double)*n*n); 
   B   = (double*)malloc(sizeof(double)*n*n); 
   C   = (double*)malloc(sizeof(double)*n*n); 
@@ -71,34 +71,33 @@ int main(int argc, char *argv[])
   R2B = (double*)malloc(sizeof(double)*n*n); 
   
   printf("Incializando matrices %d x %d\n", n, n);
-  /* A and B by column */
+  /* A y B por columna */
   initvalmat(A,   n, 1.0, 1);
   initvalmat(B,   n, 1.0, 1);
-  /* The rest by rows */
+  /* El resto por filas */
   initvalmat(T,   n, 1.0, 0);
   initvalmat(C,   n, 0.0, 0);
   initvalmat(R1A, n, 0.0, 0);
   initvalmat(R2B, n, 0.0, 0);
 
-  /* Fill M matrix with random values beetween 0 an 2*Pi */
+  /* Rellenar M con valores aleatorios entre 0 y 2Pi */
   for(i=0;i<n;i++){
     for(j=0;j<n;j++){
       M[i*n+j] = randFP(0, 2*PI);
     }
   }
   
-  /* Averages initialization */
+  /* Inicializar promedios */
   avgR1 = 0.0;
   avgR2 = 0.0;
 
   printf("Calculando con bloques de %dx%d\n", bs, bs);
   printf("  Tiras:   %d\n", n/bs);
 
-  /* Start time measurement */
+  /* Empieza a medir el tiempo */
   timetick = dwalltime();
 
-  /* Calculate R1, R2 and their averages */
-  // también se puede hacer cada cosa en for distintos
+  /* Calcular R1, R2 y acumular para los promedios */
   for(i=0;i<n;i++){
     for(j=0;j<n;j++){
       k = i*n+j;
@@ -113,13 +112,13 @@ int main(int argc, char *argv[])
   avgR1 = avgR1 / (n*n);
   avgR2 = avgR2 / (n*n);
 
-  /* Calculate R1 * A */
+  /* Calcular R1 * A */
   matmulblks(R1, A, R1A, n, bs);
 
-  /* Calculate R2 * B */
+  /* Calcular R2 * B */
   matmulblks(R2, B, R2B, n, bs);
 
-  /* Calculate C */
+  /* Calcular C */
   for(i=0;i<n;i++){
     for(j=0;j<n;j++){
       k = i*n+j;
@@ -143,10 +142,10 @@ int main(int argc, char *argv[])
 
 /*****************************************************************/
 
-/* Init square matrix with a specific value */
+/* Inicializar matriz cuadrada con un valor específico */
 void initvalmat(double *mat, int n, double val, int transpose)
 {
-  int i, j;      /* Indexes */
+  int i, j;      /* Índices */
 
 	if (transpose == 0) {
 	  for (i = 0; i < n; i++)
@@ -169,10 +168,10 @@ void initvalmat(double *mat, int n, double val, int transpose)
 
 /*****************************************************************/
 
-/* Multiply square matrices, blocked version */
+/* Multiplicar matrices cuadradas, por bloques */
 void matmulblks(double *a, double *b, double *c, int n, int bs)
 {
-  int i, j, k;    /* Guess what... */
+  int i, j, k;
 
   /* Init matrix c, just in case */  
   //initvalmat(c, n, 0.0, 0);
@@ -191,10 +190,10 @@ void matmulblks(double *a, double *b, double *c, int n, int bs)
 
 /*****************************************************************/
 
-/* Multiply (block)submatrices */
+/* Multiplicar submatrices (bloques) */
 void blkmul(double *ablk, double *bblk, double *cblk, int n, int bs)
 {
-  int i, j, k;    /* Guess what... again... */
+  int i, j, k;
 
   for (i = 0; i < bs; i++)
   {

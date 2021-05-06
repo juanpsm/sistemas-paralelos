@@ -5,7 +5,7 @@
 /* Multiply matrices */
 void multip(int *a, int *b, int *c, int n);
 
-/* Time calculation */
+/* Para calcular el tiempo */
 double dwalltime(){
         double sec;
         struct timeval tv;
@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
 {
   int n;
 
-  /* Check command line parameters */
+  /* Verificar parámetros */
   if (argc < 2){
 	  printf("\nFaltan argumentos. Usar %s n",argv[0]);
 	  exit(1);
@@ -28,16 +28,16 @@ int main(int argc, char *argv[])
 
   n = atoi(argv[1]);
 
-  /* Pointers */
+  /* Punteros */
   int *A,*B,*AB;
 
-  /* Indexes */
+  /* Índices */
   int i, j, k;
 
-  /* Time measurement */
+  /* Para medir el tiempo */
   double timetick;
 
-  /* Getting memory */
+  /* Alocar memoria */
   A  = (int*)malloc(sizeof(int)*n*n);
   B  = (int*)malloc(sizeof(int)*n*n); 
   AB = (int*)malloc(sizeof(int)*n*n);
@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
 
   printf("Calculando A x B... \n");
 
-  /* Start time measurement */
+  /* Empieza a medir el tiempo */
   timetick = dwalltime();
 
   multip(A, B, AB, n);
@@ -109,7 +109,7 @@ int main(int argc, char *argv[])
 
 /*****************************************************************/
 
-/* Multiply square matrices */
+/* Multiplicar matrices cuadradas, */
 void multip(int *a, int *b, int *c, int n)
 {
   int i,j,k;

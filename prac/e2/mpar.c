@@ -8,7 +8,7 @@
 /* For pthreads */
 void * calculate (void * ptr);
 
-/* Time calculation */
+/* Para calcular el tiempo */
 double dwalltime(){
         double sec;
         struct timeval tv;
@@ -18,7 +18,7 @@ double dwalltime(){
         return sec;
 }
 
-/* Random number generation */
+/* Generación de números aleatorios */
 double randFP(double min, double max) {
   double range = (max - min);
   double div = RAND_MAX / range;
@@ -27,7 +27,7 @@ double randFP(double min, double max) {
 
 #define PI 3.14159265358979323846
 
-/* Shared variables */
+/* Variables compartidas */
 double *A,*B,*C,*R1,*R2,*T,*M,*R1A,*R2B, avgR1, avgR2;
 int n, Th;
 
@@ -41,7 +41,7 @@ pthread_barrier_t   barrier_averages_ready;
 int main(int argc, char *argv[])
 {
 
-  /* Check command line parameters */
+  /* Verificar parámetros */
   if (argc < 3){
 	  printf("\nFaltan argumentos. Usar %s n Th",argv[0]);
 	  exit(1);
@@ -50,17 +50,17 @@ int main(int argc, char *argv[])
   n = atoi(argv[1]);
   Th = atoi(argv[2]);
 
-  /* Random numbers */
+  /* Para números aleatorios */
   time_t t;
   srand((unsigned) time(&t));
 
-  /* Indexes */
+  /* Índices */
   int i, j;
 
-  /* Time measurement */
+  /* Para medir el tiempo */
   double timetick;
 
-  /* Getting memory */
+  /* Alocar memoria */
   A   = (double*)malloc(sizeof(double)*n*n); 
   B   = (double*)malloc(sizeof(double)*n*n); 
   C   = (double*)malloc(sizeof(double)*n*n); 
@@ -74,25 +74,25 @@ int main(int argc, char *argv[])
   printf("Incializando matrices %d x %d\n", n, n);
   for(i=0;i<n;i++){
     for(j=0;j<n;j++){
-      /* A and B by column */
+      /* A y B por columna */
       A[i+j*n]=1.0;
       B[i+j*n]=1.0;
-      /* The rest by rows */
+      /* El resto por filas */
       T[i*n+j]=1.0;
       /* Zero then += */
       C[i*n+j]=0.0;
       R1A[i*n+j]=0.0;
       R2B[i*n+j]=0.0;
-      /* Fill M matrix with random values beetween 0 an 2*Pi */
+      /* Rellenar M con valores aleatorios entre 0 y 2Pi */
       M[i*n+j] = randFP(0, 2*PI);
     }
   }
   
-  /* Averages initialization */
+  /* Inicializar promedios */
   avgR1 = 0.0;
   avgR2 = 0.0;
 
-  /* Threads initialization */
+  /* Inicializar hilos*/
   int id, ids[Th];
   pthread_attr_t attr;
   pthread_t threads[Th];
@@ -108,10 +108,10 @@ int main(int argc, char *argv[])
   printf("  HILOS:   %d\n", Th);
   printf("  %.2f filas x hilo\n\n", n / (double) Th);
 
-  /* Start time measurement */
+  /* Empieza a medir el tiempo */
   timetick = dwalltime();
 
-  /* Create threads */
+  /* Crear hilos */
   for (id = 0; id < Th; id++) {
     ids[id] = id;
     pthread_create(&threads[id], &attr, calculate, &ids[id]);
@@ -132,21 +132,24 @@ int main(int argc, char *argv[])
   free(T);
   free(R1A);
   free(R2B);
+  pthread_mutex_destroy(&mutex_avgR1);
+  pthread_mutex_destroy(&mutex_avgR2);
+  pthread_barrier_destroy(&barrier_R_ready;
+  pthread_barrier_destroy(&barrier_averages_ready);
   
   return 0;
 }
 
 /*****************************************************************/
 
-/* Función para calcular el producto de matrices partido por filas.
-   Calcula las filas de A*B desde start_row a end_row. */
+/* Función para los hilos. Cada uno calcula las filas de C desde start_row a end_row. */
 void * calculate (void * ptr) {
   int id;
   id = *((int *) ptr);
   int i,j,k,start_row,end_row;
   double local_avgR1, local_avgR2, sinPhi, cosPhi;
   
-  /* Each thread get some rows to operate with */
+  /* Cada hilo obtiene ciertas filas sobre las que operará */
   start_row = id*n/Th;
   end_row = (id+1)*n/Th;
 
@@ -156,8 +159,8 @@ void * calculate (void * ptr) {
   // debug info
   // printf("(%d) El hilo %d hará %d filas  ->  for i = %d .. %d (no incl)\n",id, id, end_row-start_row, start_row, end_row);
 
-  /* Calculate R1, R2 and their averages */
-  // también se puede hacer cada cosa en for distintos
+  /* Calcular R1, R2 y acumular para los promedios */
+  
   for(i=start_row;i<end_row;i++){
     for(j=0;j<n;j++){
       k = i*n+j;
@@ -172,7 +175,9 @@ void * calculate (void * ptr) {
     }
   }
 
-  /* Calculate R1 * A */
+  /* Calcular R1 * A */
+  /* Si bien cada hilo en particular va a escribir los elementos de R1A de la "franja" que le tocó,
+      para calcular el elemento (i,j) necesita TODA la fila */ 
   for(i = start_row; i < end_row; i++){
     for(j=0;j<n;j++){
       for(k=0;k<n;k++){
@@ -181,7 +186,7 @@ void * calculate (void * ptr) {
     }
   }
 
-  /* Calculate R2 * B */
+  /* Calcular R2 * B */
   for(i = start_row; i < end_row; i++){
     for(j=0;j<n;j++){
       for(k=0;k<n;k++){
@@ -190,7 +195,7 @@ void * calculate (void * ptr) {
     }
   }
 
-  /* Update shared average */
+  /* Actualizar promedio compartido */
   pthread_mutex_lock(&mutex_avgR1);
     avgR1 += local_avgR1;
   pthread_mutex_unlock(&mutex_avgR1);
@@ -199,7 +204,7 @@ void * calculate (void * ptr) {
     avgR2 += local_avgR2;
   pthread_mutex_unlock(&mutex_avgR2);
 
-  /* Only one divides the accumulated, butwe need a barrier. Every thread must have finished accumulating the average*/
+  /* Only one divides the accumulated, but we need a barrier. Every thread must have finished accumulating the average*/
   pthread_barrier_wait (&barrier_R_ready);
 
   /* Thanks to the previous barrier, you can be sure no one is accessing the
@@ -213,7 +218,7 @@ void * calculate (void * ptr) {
   pthread_barrier_wait (&barrier_averages_ready);
   // EN REALIDAD SI HAGO LA DIVISION DEL PROMEDIO JUNTO CON LA SUMA, ME ALCANZA CON UNA SOLA BARRERA, PERO HAGO MAS DIVISIONES, NO SE QUE SERÁ MÁS RÁPIDO
 
-  /* Calculate C */
+  /* Calcular C */
   for(i = start_row; i < end_row; i++){
     for(j=0;j<n;j++){
       k = i*n+j;
