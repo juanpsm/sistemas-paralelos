@@ -104,7 +104,8 @@ int main(int argc, char *argv[])
 
   printf("Calculando con bloques de %dx%d\n", bs, bs);
   printf("  Tiras:   %d\n", n/bs);
-  printf("  HILOS:   %d\n", Th);
+  omp_set_num_threads(Th);
+  printf("  HILOS:   %d\n", omp_get_num_threads());
   /* La matriz se dividirá en tiras que dependen del ancho del bloque 
     hay un total de n/bs tiras, en cada hilo tendré:*/
   printf("  %.2f tiras x hilo\n\n", n/bs / (double) Th);
