@@ -34,7 +34,7 @@ double randFP(double min, double max) {
 
 /* Variables compartidas */
 double *A,*B,*C,*R1,*R2,*T,*M,*R1A,*R2B, avgR1, avgR2;
-int n, Th, bs;
+int n, Th, bs, tiras;
 
 pthread_mutex_t mutex_avgR1;
 pthread_mutex_t mutex_avgR2;
@@ -115,7 +115,13 @@ int main(int argc, char *argv[])
   printf("Calculando con bloques de %dx%d\n", bs, bs);
   printf("  Tiras:   %d\n", n/bs);
   printf("  HILOS:   %d\n", Th);
+  /* La matriz se dividirá en tiras que dependen del ancho del bloque 
+    hay un total de n/bs tiras, en cada hilo tendré:*/
   printf("  %.2f tiras x hilo\n\n", n/bs / (double) Th);
+  /* Este numero puede llegar a ser decimal si se elige una cantidad de hilos incorrecta,
+   por lo que lo convertimos a entero con:*/
+  tiras = (int) ceil(n/bs / (double) Th));
+
 
   /* Empieza a medir el tiempo */
   timetick = dwalltime();
@@ -186,11 +192,10 @@ void * calculate(void * ptr)
   double local_avgR1, local_avgR2, sinPhi, cosPhi;
   double *ablk, *bblk, *cblk;
 
-  int tiras = (int) ceil(n/bs / (double) Th);
   /* Cada hilo obtiene ciertas filas sobre las que operará */
   start_row = id * tiras * bs;
   end_row = (id+1) * tiras * bs;
-  // Si acotamos el end_row, no entrará a los for los hilos que sobren
+  // Si acotamos el end_row con n, no entrará a los for los hilos que sobren, lo cual no debería suceder, pero por si acaso
   if (end_row > n) end_row = n;
 
   /* Inicializar acumuladores para promedios*/
