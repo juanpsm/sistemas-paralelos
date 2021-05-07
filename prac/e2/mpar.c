@@ -1,7 +1,7 @@
 #include<stdio.h>
 #include<stdlib.h>   /* malloc() */
 #include<sys/time.h> /* gettimeofday */
-#include<math.h>     /* sin y cos */
+#include<math.h>     /* sin, cos, fabs */
 #include<time.h>     /* srand((unsigned) time(&t)) */
 #include<pthread.h>  /* hilos */
 
@@ -28,7 +28,7 @@ double randFP(double min, double max) {
 #define PI 3.14159265358979323846
 
 /* Variables compartidas */
-double *A,*B,*C,*R1,*R2,*T,*M,*R1A,*R2B, avgR1, avgR2;
+double *A,*B,*C,*R1,*R2,*T,*M,*R1A,*R2B, avgR1, avgR2, *C_CHECK;
 int n, Th;
 
 pthread_mutex_t mutex_avgR1;
@@ -119,7 +119,84 @@ int main(int argc, char *argv[])
     pthread_join(threads[id], NULL);
   }
 
+  printf(" TIEMPO = %f\n\n", dwalltime() - timetick);
+
+  /************* Secuencial ***************/
+
+  int k;
+  double sinPhi, cosPhi;
+  C_CHECK   = (double*)malloc(sizeof(double)*n*n);
+
+  /* Resetear matrices*/
+  for(i=0;i<n;i++){
+    for(j=0;j<n;j++){
+      C_CHECK[i*n+j]=0.0;
+      R1A[i*n+j]=0.0;
+      R2B[i*n+j]=0.0;
+    }
+  }
+
+  /* Resetear promedios */
+  avgR1 = 0.0;
+  avgR2 = 0.0;
+
+  printf("Calculando secuencialmente... \n");
+
+  /* Empieza a medir el tiempo */
+  timetick = dwalltime();
+
+  /* Calcular R1, R2 y acumular para los promedios */
+  for(i=0;i<n;i++){
+    for(j=0;j<n;j++){
+      k = i*n+j;
+      sinPhi = sin(M[k]);
+      cosPhi = cos(M[k]);
+      R1[k] = (1-T[k])*(1-cosPhi)+T[k]*sinPhi;
+      avgR1 += R1[k];
+      R2[k] = (1-T[k])*(1-sinPhi)+T[k]*cosPhi;
+      avgR2 += R2[k];
+    }
+  }
+  avgR1 = avgR1 / (n*n);
+  avgR2 = avgR2 / (n*n);
+
+  /* Calcular R1 * A */
+  for(i=0;i<n;i++){
+    for(j=0;j<n;j++){
+      for(k=0;k<n;k++){
+        R1A[i*n+j] += R1[i*n+k]*A[k+j*n];
+      }
+    }
+  }
+  /* Calcular R2 * B */
+  for(i=0;i<n;i++){
+    for(j=0;j<n;j++){
+      for(k=0;k<n;k++){
+        R2B[i*n+j] += R2[i*n+k]*B[k+j*n];
+      }
+    }
+  }
+
+  /* Calcular C_CHECK */
+  for(i=0;i<n;i++){
+    for(j=0;j<n;j++){
+      k = i*n+j;
+      C_CHECK[k] = T[k] + avgR1 * avgR2 * (R1A[k] + R2B[k]);
+    }
+  }
   printf(" TIEMPO = %f\n", dwalltime() - timetick);
+/*********** END Secuencial ***************/
+
+  /* Comprobación */
+  int error = 0;
+  for(i=0; i < n*n; i++){
+    if (fabs(C[i] - C_CHECK[i]) > 0.000001){
+      error = 1;
+      break;
+    }
+  }
+  printf("Resultado ");
+  if (error) printf("erroneo.\n"); else printf("correcto.\n");
 
   free(A);
   free(B);
@@ -127,6 +204,7 @@ int main(int argc, char *argv[])
   free(R1);
   free(R2);
   free(C);
+  free(C_CHECK);
   free(T);
   free(R1A);
   free(R2B);

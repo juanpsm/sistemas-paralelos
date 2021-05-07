@@ -3,7 +3,7 @@
 #include<stdio.h>
 #include<stdlib.h>   /* malloc() */
 #include<sys/time.h> /* gettimeofday */
-#include<math.h>     /* sin, cos, ceil */
+#include<math.h>     /* sin, cos, ceil, fabs */
 #include<time.h>     /* srand((unsigned) time(&t)) */
 #include<pthread.h>  /* hilos */
 
@@ -12,6 +12,12 @@ void initvalmat(double *mat, int n, double val, int transpose);
  
 /* Multiplicar matrices cuadradas, por bloques, para pthreads */
 void * calculate (void * ptr);
+
+/* Multiplicar matrices cuadradas, por bloques */
+void matmulblks(double *a, double *b, double *c, int n, int bs);
+
+/* Multiplicar submatrices (bloques) */
+void blkmul(double *ablk, double *bblk, double *cblk, int n, int bs);
 
 /* Para calcular el tiempo */
 double dwalltime(){
@@ -33,7 +39,7 @@ double randFP(double min, double max) {
 #define PI 3.14159265358979323846
 
 /* Variables compartidas */
-double *A,*B,*C,*R1,*R2,*T,*M,*R1A,*R2B, avgR1, avgR2;
+double *A,*B,*C,*R1,*R2,*T,*M,*R1A,*R2B, avgR1, avgR2, *C_CHECK;
 int n, Th, bs, tiras;
 
 pthread_mutex_t mutex_avgR1;
@@ -120,10 +126,9 @@ int main(int argc, char *argv[])
   printf("  %.2f tiras x hilo\n\n", n/bs / (double) Th);
   /* Este numero puede llegar a ser decimal si se elige una cantidad de hilos incorrecta,
    por lo que lo convertimos a entero con:*/
-  tiras = (int) ceil(n/bs / (double) Th));
+  tiras = (int) ceil(n/bs / (double) Th);
 
-
-  /* Empieza a medir el tiempo */
+  /* Empieza a medir el tiempo */ 
   timetick = dwalltime();
 
   /* Crear hilos */
@@ -136,7 +141,69 @@ int main(int argc, char *argv[])
     pthread_join(threads[id], NULL);
   }
 
+  printf(" TIEMPO = %f\n\n", dwalltime() - timetick);
+
+  /************* Secuencial ***************/
+
+  int k;
+  double sinPhi, cosPhi;
+  C_CHECK   = (double*)malloc(sizeof(double)*n*n);
+
+  /* Resetear matrices*/
+  initvalmat(C_CHECK, n, 0.0, 0);
+  initvalmat(R1A,     n, 0.0, 0);
+  initvalmat(R2B,     n, 0.0, 0);
+
+  /* Resetear promedios */
+  avgR1 = 0.0;
+  avgR2 = 0.0;
+
+  printf("Calculando con bloques de %dx%d, secuencialmente\n", bs, bs);
+
+  /* Empieza a medir el tiempo */
+  timetick = dwalltime();
+
+  /* Calcular R1, R2 y acumular para los promedios */
+  for(i=0;i<n;i++){
+    for(j=0;j<n;j++){
+      k = i*n+j;
+      sinPhi = sin(M[k]);
+      cosPhi = cos(M[k]);
+      R1[k] = (1-T[k])*(1-cosPhi)+T[k]*sinPhi;
+      avgR1 += R1[k];
+      R2[k] = (1-T[k])*(1-sinPhi)+T[k]*cosPhi;
+      avgR2 += R2[k];
+    }
+  }
+  avgR1 = avgR1 / (n*n);
+  avgR2 = avgR2 / (n*n);
+
+  /* Calcular R1 * A */
+  matmulblks(R1, A, R1A, n, bs);
+
+  /* Calcular R2 * B */
+  matmulblks(R2, B, R2B, n, bs);
+
+  /* Calcular C_CHECK */
+  for(i=0;i<n;i++){
+    for(j=0;j<n;j++){
+      k = i*n+j;
+      C_CHECK[k] = T[k] + avgR1 * avgR2 * (R1A[k] + R2B[k]);
+    }
+  }
   printf(" TIEMPO = %f\n", dwalltime() - timetick);
+  /*********** END Secuencial ***************/
+
+  /* Comprobación */
+  int error = 0;
+  for(i=0; i < n*n; i++){
+    if (fabs(C[i] - C_CHECK[i]) > 0.000001){
+      error = 1;
+      break;
+    }
+  }
+  printf("Resultado ");
+  if (error) printf("erroneo.\n"); else printf("correcto.\n");
 
   free(A);
   free(B);
@@ -144,6 +211,7 @@ int main(int argc, char *argv[])
   free(R1);
   free(R2);
   free(C);
+  free(C_CHECK);
   free(T);
   free(R1A);
   free(R2B);
@@ -292,6 +360,47 @@ void * calculate(void * ptr)
     }
   }
   pthread_exit(0);
+}
+
+/*****************************************************************/
+
+/* Multiplicar matrices cuadradas, por bloques */
+void matmulblks(double *a, double *b, double *c, int n, int bs)
+{
+  int i, j, k;
+
+  /* Init matrix c, just in case */  
+  //initvalmat(c, n, 0.0, 0);
+  
+  for (i = 0; i < n; i += bs)
+  {
+    for (j = 0; j < n; j += bs)
+    {
+      for  (k = 0; k < n; k += bs)
+      {
+        blkmul(&a[i*n + k], &b[j*n + k], &c[i*n + j], n, bs);
+      }
+    }
+  }
+}
+
+/*****************************************************************/
+
+/* Multiplicar submatrices (bloques) */
+void blkmul(double *ablk, double *bblk, double *cblk, int n, int bs)
+{
+  int i, j, k;
+
+  for (i = 0; i < bs; i++)
+  {
+    for (j = 0; j < bs; j++)
+    {
+      for  (k = 0; k < bs; k++)
+      {
+        cblk[i*n + j] += ablk[i*n + k] * bblk[j*n + k];
+      }
+    }
+  }
 }
 
 /*****************************************************************/
