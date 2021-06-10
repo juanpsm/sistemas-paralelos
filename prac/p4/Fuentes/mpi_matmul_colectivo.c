@@ -59,16 +59,19 @@ int main(int argc, char* argv[]){
 	commTimes[0] = MPI_Wtime();
 
 	/* distribuir datos*/
-	if (rank==COORDINATOR){
+	MPI_Scatter(a, stripSize*n, MPI_DOUBLE, a, stripSize*n, MPI_DOUBLE, COORDINATOR, MPI_COMM_WORLD);
+	MPI_Bcast(b, n*n, MPI_DOUBLE, COORDINATOR, MPI_COMM_WORLD);
+
+	// if (rank==COORDINATOR){
 	
-		for (i=1; i<numProcs; i++) {
-			MPI_Send(a+i*stripSize*n, stripSize*n, MPI_DOUBLE, i, 0, MPI_COMM_WORLD);
-			MPI_Send(b, n*n, MPI_DOUBLE, i, 1, MPI_COMM_WORLD);
-		}
-	} else {
-		MPI_Recv(a, stripSize*n, MPI_DOUBLE, COORDINATOR, 0, MPI_COMM_WORLD, &status);
-		MPI_Recv(b, n*n, MPI_DOUBLE, COORDINATOR, 1, MPI_COMM_WORLD, &status);
-	}
+	// 	for (i=1; i<numProcs; i++) {
+	// 		MPI_Send(a+i*stripSize*n, stripSize*n, MPI_DOUBLE, i, 0, MPI_COMM_WORLD);
+	// 		MPI_Send(b, n*n, MPI_DOUBLE, i, 1, MPI_COMM_WORLD);
+	// 	}
+	// } else {
+	// 	MPI_Recv(a, stripSize*n, MPI_DOUBLE, COORDINATOR, 0, MPI_COMM_WORLD, &status);
+	// 	MPI_Recv(b, n*n, MPI_DOUBLE, COORDINATOR, 1, MPI_COMM_WORLD, &status);
+	// }
 
 	commTimes[1] = MPI_Wtime();
 
@@ -86,12 +89,14 @@ int main(int argc, char* argv[]){
 	commTimes[2] = MPI_Wtime();
 
 	// recolectar resultados parciales
-	if (rank==COORDINATOR){
-		for (i=1; i<numProcs; i++) {
-			MPI_Recv(c+i*stripSize*n, n*stripSize, MPI_DOUBLE, i, 2, MPI_COMM_WORLD, &status);			
-		}
-	} else
-		MPI_Send(c, n*stripSize, MPI_DOUBLE, COORDINATOR, 2, MPI_COMM_WORLD);
+
+	MPI_Gather(c, stripSize*n, MPI_DOUBLE, c, stripSize*n, MPI_DOUBLE, COORDINATOR, MPI_COMM_WORLD);
+	// if (rank==COORDINATOR){
+	// 	for (i=1; i<numProcs; i++) {
+	// 		MPI_Recv(c+i*stripSize*n, n*stripSize, MPI_DOUBLE, i, 2, MPI_COMM_WORLD, &status);			
+	// 	}
+	// } else
+	// 	MPI_Send(c, n*stripSize, MPI_DOUBLE, COORDINATOR, 2, MPI_COMM_WORLD);
 
 	commTimes[3] = MPI_Wtime();
 
@@ -118,6 +123,65 @@ int main(int argc, char* argv[]){
 
 		printf("Multiplicacion de matrices (N=%d)\tTiempo total=%lf\tTiempo comunicacion=%lf\n",n,totalTime,commTime);
 	}
+
+	// if (rank==COORDINATOR){
+	// 	printf("(%d) A = [\n",rank);
+	// 	for (i=0; i<n; i++) {
+	// 		for (j=0; j<n ;j++ ) {
+	// 			printf(" %f ", a[i*n+k]); 
+	// 		}
+	// 		printf("\n");
+	// 	}
+	// 	printf("] \n");
+
+	// 	printf("(%d) B = [\n",rank);
+	// 	for (i=0; i<n; i++) {
+	// 		for (j=0; j<n ;j++ ) {
+	// 			printf(" %f ", b[j*n+k]); 
+	// 		}
+	// 		printf("\n");
+	// 	}
+	// 	printf("] \n");
+
+	// 	printf("(%d) C = [\n",rank);
+	// 	for (i=0; i<n; i++) {
+	// 		for (j=0; j<n ;j++ ) {
+	// 			printf(" %f ", c[i*n+k]); 
+	// 		}
+	// 		printf("\n");
+	// 	}
+	// 	printf("] \n");
+	// }
+	// for (i=1; i<numProcs; i++) {
+	// 	if (rank==i){
+	// 		printf("(%d) A = [\n",rank);
+	// 		for (i=0; i<stripSize; i++) {
+	// 			for (j=0; j<n ;j++ ) {
+	// 				printf(" %f ", a[i*n+k]); 
+	// 			}
+	// 			printf("\n");
+	// 		}
+	// 		printf("] \n");
+
+	// 		printf("(%d) B = [\n",rank);
+	// 		for (i=0; i<n; i++) {
+	// 			for (j=0; j<n ;j++ ) {
+	// 				printf(" %f ", b[j*n+k]); 
+	// 			}
+	// 			printf("\n");
+	// 		}
+	// 		printf("] \n");
+
+	// 		printf("(%d) C = [\n",rank);
+	// 		for (i=0; i<stripSize; i++) {
+	// 			for (j=0; j<n ;j++ ) {
+	// 				printf(" %f ", c[i*n+k]); 
+	// 			}
+	// 			printf("\n");
+	// 		}
+	// 		printf("] \n");
+	// 	}
+	// }
 	
 	free(a);
 	free(b);
