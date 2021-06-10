@@ -1,0 +1,11 @@
+n:                 1024
+numProcs:          2
+numThreads:        8
+bs:                64
+Tiras(n/bs):       16
+stripSize(n/nP):   512
+rowsThread(sS/nT): 64
+totalTime:         0.521087
+commTime:          0.289025
+secTime:           0.121042
+Resultado: erroneo

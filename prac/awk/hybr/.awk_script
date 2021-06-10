@@ -1,0 +1,4 @@
+{ FS=":"; for (i = NF; i <= 2*NF; i++) {sub(/^ */, "", $i); f[i] = f[i]"\t"$i;}
+       if (NF > n) n = NF }
+ END { for (i = 1; i <= n; i++) sub(/^ */, "", f[i]) ;
+       for (i = 1; i <= n; i++) print f[i]}

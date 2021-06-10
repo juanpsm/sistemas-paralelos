@@ -1,0 +1,12 @@
+n:                 512
+numProcs:          8
+numThreads:        8
+bs:                64
+Tiras(n/bs):       8
+stripSize(n/nP):   64
+rowsThread(sS/nT): 8
+New bs:            8
+totalTime:         0.200817
+commTime:          0.208234
+secTime:           0.459695
+Resultado: correcto!

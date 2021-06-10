@@ -1,0 +1,1 @@
+gawk 'BEGIN { OFS=","; for(i=0;i<4;i++) print "sbatch hybrid-script.sh "2**(9+i)" "4}'
