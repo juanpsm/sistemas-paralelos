@@ -91,16 +91,21 @@ int main(int argc, char *argv[])
     printf("Tiras(n/bs):       %d\n", n/bs);
     printf("procRows(n/nP):    %d\n", procRows);
     printf("thRows(sS/nT):     %d\n", thRows);
-    // NO puede ser thRows<bs
-    // N=512  P=4 bs=64 numThreads=8
-    // Strip=128
-    // thRows=16
-    // ==> bs := 16
-    if (thRows < bs) {
-      bs2 = bs;
-      bs = thRows;
+  }
+  // NO puede ser thRows<bs
+  // N=512  P=4 bs=64 numThreads=8
+  // Strip=128
+  // thRows=16
+  // ==> bs := 16
+  bs2 = bs;
+  if (thRows < bs) {
+    bs = thRows;
+    if (rank == COORDINATOR) {
       printf("New bs:            %d\n", bs);
     }
+  }
+
+  if (rank == COORDINATOR) {
     /* Matrices completas, debe inicializarlas el COORDINATOR */
     T = (double*) malloc(sizeof(double)*size);
     M = (double*) malloc(sizeof(double)*size);
@@ -168,24 +173,18 @@ int main(int argc, char *argv[])
   /* Barera */
   MPI_Barrier(MPI_COMM_WORLD); /* ????????????????????????????????????????????????? */
 
-  commTimes[0] =  MPI_Wtime();
-
   /* Distribuir datos*/
+  if (rank == COORDINATOR) commTimes[0] =  MPI_Wtime();
   MPI_Scatter(M, workerSize, MPI_DOUBLE, M, workerSize, MPI_DOUBLE, COORDINATOR, MPI_COMM_WORLD);
   MPI_Scatter(T, workerSize, MPI_DOUBLE, T, workerSize, MPI_DOUBLE, COORDINATOR, MPI_COMM_WORLD);
   MPI_Bcast(A, size, MPI_DOUBLE, COORDINATOR, MPI_COMM_WORLD);
   MPI_Bcast(B, size, MPI_DOUBLE, COORDINATOR, MPI_COMM_WORLD);
+  if (rank == COORDINATOR) commTimes[1] =  MPI_Wtime();
 
-  commTimes[1] = MPI_Wtime();
-
-  int startP = rank*procRows; /* ????????????????????????????????????????????????? */
   /* Comienza cálculo */
   #pragma omp parallel
-  { 
-    id = omp_get_thread_num();
+  {
     numThreads = omp_get_num_threads();
-    int startT = (id*thRows) + startP;
-    printf("(P %d of %d, T %d of %d) StartP %d StartT %d pRows %d thRows %d\n", rank, numProcs, id, numThreads, startP, startT, procRows, thRows);
 
     #pragma omp for private (i,j,k,cosPhi,sinPhi) reduction(+:lavgR1) reduction(+:lavgR2)
     for(i=0;i<procRows;i++){
@@ -202,16 +201,16 @@ int main(int argc, char *argv[])
     #pragma omp single
     { 
       /* Un hilo de cada nodo reduce el promedio*/
-      commTimes[2] = MPI_Wtime();
+      if (rank == COORDINATOR) commTimes[2] =  MPI_Wtime();
       MPI_Allreduce(&lavgR1, &avgR1, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
       MPI_Allreduce(&lavgR2, &avgR2, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-      commTimes[3] = MPI_Wtime();
+      if (rank == COORDINATOR) commTimes[3] =  MPI_Wtime();
       /* El promedio se comparte entre los hilos del nodo */
       avgR1 = avgR1 / (size);
       avgR2 = avgR2 / (size);
     }
     /* Calcular R1 * A */
-    #pragma omp for private (i,j,k,ii,jj,kk,ablk,bblk,cblk)
+    #pragma omp for private (i,j,k,ii,jj,kk,ablk,bblk,cblk) nowait
     for (i = 0; i < procRows; i+=bs)
     { 
       for (j = 0; j < n; j+=bs)
@@ -269,24 +268,22 @@ int main(int argc, char *argv[])
       }
     }
   }
-  commTimes[4] = MPI_Wtime();
+  if (rank == COORDINATOR) commTimes[4] = MPI_Wtime();
   MPI_Gather(C, workerSize, MPI_DOUBLE, C, workerSize, MPI_DOUBLE, COORDINATOR, MPI_COMM_WORLD);
-  commTimes[5] = MPI_Wtime();
+  if (rank == COORDINATOR) commTimes[5] = MPI_Wtime();
 
 
-  MPI_Reduce(commTimes, minCommTimes, COMM_SIZE, MPI_DOUBLE, MPI_MIN, COORDINATOR, MPI_COMM_WORLD);
-  MPI_Reduce(commTimes, maxCommTimes, COMM_SIZE, MPI_DOUBLE, MPI_MAX, COORDINATOR, MPI_COMM_WORLD);
-    
   if (rank == COORDINATOR) {
 
-    totalTime = maxCommTimes[5] - minCommTimes[0];
-    commTime = (maxCommTimes[1] - minCommTimes[0]) + (maxCommTimes[3] - minCommTimes[2]) + (maxCommTimes[5] - minCommTimes[4]);
+    totalTime = commTimes[5] - commTimes[0];
+    commTime = (commTimes[1] - commTimes[0]) + (commTimes[3] - commTimes[2]) + (commTimes[5] - commTimes[4]);
 
     printf("totalTime:         %lf\ncommTime:          %lf\n",totalTime,commTime);
 
     /************* Secuencial ***************/
     double *C_CHECK;
     bs = bs2;
+    printf("Secuencial con BS: %d\n", bs);
     C_CHECK = (double*)malloc(sizeof(double)*size);
     R1 = (double*) malloc(sizeof(double)*size);
     R2 = (double*) malloc(sizeof(double)*size);

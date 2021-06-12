@@ -89,11 +89,17 @@ int main(int argc, char *argv[])
     printf("Tiras(n/bs):       %d\n", n/bs);
     printf("procRows(n/nP):   %d\n", procRows);
     printf("thRows(sS/nT):    --\n");
-    if (procRows < bs) {
-      bs2 = bs;
-      bs = procRows;
+  }
+
+  bs2 = bs;
+  if (procRows < bs) {
+    bs = procRows;
+    if (rank == COORDINATOR) {
       printf("New bs:            %d\n", bs);
     }
+  }
+
+  if (rank == COORDINATOR) {
     /* Matrices completas, debe inicializarlas el COORDINATOR */
     T = (double*) malloc(sizeof(double)*size);
     M = (double*) malloc(sizeof(double)*size);
@@ -161,19 +167,15 @@ int main(int argc, char *argv[])
   /* Barera */
   MPI_Barrier(MPI_COMM_WORLD); /* ????????????????????????????????????????????????? */
 
-  commTimes[0] =  MPI_Wtime();
-
   /* Distribuir datos*/
+  if (rank == COORDINATOR) commTimes[0] =  MPI_Wtime();
   MPI_Scatter(M, workerSize, MPI_DOUBLE, M, workerSize, MPI_DOUBLE, COORDINATOR, MPI_COMM_WORLD);
   MPI_Scatter(T, workerSize, MPI_DOUBLE, T, workerSize, MPI_DOUBLE, COORDINATOR, MPI_COMM_WORLD);
   MPI_Bcast(A, size, MPI_DOUBLE, COORDINATOR, MPI_COMM_WORLD);
   MPI_Bcast(B, size, MPI_DOUBLE, COORDINATOR, MPI_COMM_WORLD);
-
-  commTimes[1] = MPI_Wtime();
+  if (rank == COORDINATOR) commTimes[1] =  MPI_Wtime();
 
   /* Comienza cálculo */
-  int startP = rank*procRows;
-  printf("(P %d of %d) StartP %d pRows %d \n", rank, numProcs, startP, procRows);
   for(i=0;i<procRows;i++){
     for(j=0;j<n;j++){
       k = i*n+j;
@@ -187,10 +189,10 @@ int main(int argc, char *argv[])
   }
 
   /* Recopilar promedios */
-  commTimes[2] = MPI_Wtime();
+  if (rank == COORDINATOR) commTimes[2] =  MPI_Wtime();
   MPI_Allreduce(&lavgR1, &avgR1, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
   MPI_Allreduce(&lavgR2, &avgR2, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-  commTimes[3] = MPI_Wtime();
+  if (rank == COORDINATOR) commTimes[3] =  MPI_Wtime();
   /* Todos los hilos deben actualizar el promedio */
   avgR1 = avgR1 / (size);
   avgR2 = avgR2 / (size);
@@ -252,24 +254,22 @@ int main(int argc, char *argv[])
       C[k] = T[k] + avgR1 * avgR2 * (R1A[k] + R2B[k]);
     }
   }
-  commTimes[4] = MPI_Wtime();
+  if (rank == COORDINATOR) commTimes[4] = MPI_Wtime();
   MPI_Gather(C, workerSize, MPI_DOUBLE, C, workerSize, MPI_DOUBLE, COORDINATOR, MPI_COMM_WORLD);
-  commTimes[5] = MPI_Wtime();
+  if (rank == COORDINATOR) commTimes[5] = MPI_Wtime();
 
 
-  MPI_Reduce(commTimes, minCommTimes, COMM_SIZE, MPI_DOUBLE, MPI_MIN, COORDINATOR, MPI_COMM_WORLD);
-  MPI_Reduce(commTimes, maxCommTimes, COMM_SIZE, MPI_DOUBLE, MPI_MAX, COORDINATOR, MPI_COMM_WORLD);
-    
   if (rank == COORDINATOR) {
 
-    totalTime = maxCommTimes[5] - minCommTimes[0];
-    commTime = (maxCommTimes[1] - minCommTimes[0]) + (maxCommTimes[3] - minCommTimes[2]) + (maxCommTimes[5] - minCommTimes[4]);
+    totalTime = commTimes[5] - commTimes[0];
+    commTime = (commTimes[1] - commTimes[0]) + (commTimes[3] - commTimes[2]) + (commTimes[5] - commTimes[4]);
 
     printf("totalTime:         %lf\ncommTime:          %lf\n",totalTime,commTime);
 
     /************* Secuencial ***************/
     double *C_CHECK;
     bs = bs2;
+    printf("Secuencial con BS: %d\n", bs);
     C_CHECK = (double*)malloc(sizeof(double)*size);
     R1 = (double*) malloc(sizeof(double)*size);
     R2 = (double*) malloc(sizeof(double)*size);
